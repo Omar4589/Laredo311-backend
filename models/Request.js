@@ -3,9 +3,9 @@ const dateFormat = require("../utils/dateFormat");
 
 const requestSchema = new Schema(
   {
-    number: {
+    requestNumber: {
       type: Number,
-      required,
+      required: true,
       minlength: 1,
       maxlength: 1000,
       trim: true,
@@ -28,7 +28,7 @@ const requestSchema = new Schema(
     },
     address: {
       type: String,
-      required,
+      required: true,
       trim: true,
     },
     images: {

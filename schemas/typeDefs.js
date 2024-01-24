@@ -5,18 +5,18 @@ const typeDefs = gql`
     _id: ID!
     firstName: String!
     lastName: String!
-    lastName: String!
+    address: String!
     email: String!
     userRequests: [Request]
-    totalUserRequests: Number!
-    activeUserRequests: Number!
-    canceledUserRequests: Number!
-    completedUserRequests: Number!
+    totalUserRequests: Int!
+    activeUserRequests: Int!
+    canceledUserRequests: Int!
+    completedUserRequests: Int!
   }
 
   type Request {
     _id: ID!
-    number: Number!
+    requestNumber: Int!
     type: String!
     status: String!
     date: String!
@@ -26,11 +26,11 @@ const typeDefs = gql`
   }
 
   type RequestTotals {
-    _id: ID!
-    totalRequests: Number!
-    activeRequests: Number!
-    canceledRequests: Number!
-    completedRequests: Number!
+    _id: String!
+    totalRequests: Int!
+    activeRequests: Int!
+    canceledRequests: Int!
+    completedRequests: Int!
   }
 
   type Auth {
@@ -45,6 +45,21 @@ const typeDefs = gql`
     allRequests: [Request]
     request(requestId: ID!): Request
     requestTotals: RequestTotals
+  }
+
+  type Mutation {
+    login(email: String!, password: String!): Auth
+    createUser(
+      firstName: String!
+      lastName: String!
+      email: String!
+      password: String!
+    ): Auth
+    updatePassword(
+      email: String!
+      currentPassword: String!
+      newPassword: String!
+    ): User
   }
 `;
 

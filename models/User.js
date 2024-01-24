@@ -18,6 +18,7 @@ const userSchema = new Schema(
     address: {
       type: String,
       trim: true,
+      default: "",
     },
     email: {
       type: String,
@@ -42,22 +43,22 @@ const userSchema = new Schema(
     ],
     totalUserRequests: {
       type: Number,
-      required,
+      required: true,
       default: 0,
     },
     activeUserRequests: {
       type: Number,
-      required,
+      required: true,
       default: 0,
     },
     canceledUserRequests: {
       type: Number,
-      required,
+      required: true,
       default: 0,
     },
     completedUserRequests: {
       type: Number,
-      required,
+      required: true,
       default: 0,
     },
   },

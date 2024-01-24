@@ -25,7 +25,7 @@ const resolvers = {
       return await Request.findOne({ _id: requestId });
     },
     requestTotals: async (parent) => {
-      return await RequestTotals.find();
+      return await RequestTotals.findOne({ _id: "requestTotal956" });
     },
   },
   Mutation: {
