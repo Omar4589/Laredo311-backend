@@ -7,7 +7,6 @@ const userSchema = new Schema(
       type: String,
       required: [true, "Please your first name."],
       trim: true,
-
       maxlength: [25, "The name you entered is too long, please try again."],
     },
     lastName: {
@@ -36,7 +35,7 @@ const userSchema = new Schema(
     },
     userRequests: [
       {
-        // referrances the Post table to the id
+        // referrances the Request table to the id
         type: Schema.Types.ObjectId,
         ref: "Request",
       },
@@ -50,7 +49,8 @@ const userSchema = new Schema(
       type: Number,
       required,
       default: 0,
-    }, canceledUserRequests: {
+    },
+    canceledUserRequests: {
       type: Number,
       required,
       default: 0,
