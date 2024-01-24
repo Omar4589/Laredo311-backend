@@ -1,35 +1,37 @@
 const { AuthenticationError } = require("apollo-server-express");
-const cloudinary = require("../utils/cloudinary");
 
-const { User, Listing } = require("../models");
+const { User, Request, RequestTotals } = require("../models");
 const { signToken } = require("../utils/auth");
 
 const resolvers = {
   Query: {
-    allUsers: async () => {
-      return await User.find().populate("userPosts").populate("savedFavorites");
-    },
-    allListings: async () => {
-      return await Listing.find();
-    },
-    listing: async (parent, { listingId }) => {
-      return await Listing.findOne({ _id: listingId });
-    },
     // By adding context to our query, we can retrieve the logged in user without specifically searching for them
     me: async (parent, args, context) => {
       if (context.user) {
-        const me = await User.findById({ _id: context.user._id })
-          .populate("userPosts")
-          .populate("savedFavorites");
+        const me = await User.findById({ _id: context.user._id }).populate(
+          "userRequests"
+        );
         return me;
       }
       throw new AuthenticationError("You need to be logged in!");
     },
+    allUsers: async () => {
+      return await User.find().populate("userRequests");
+    },
+    allRequests: async () => {
+      return await Request.find();
+    },
+    singleRequest: async (parent, { requestId }) => {
+      return await Request.findOne({ _id: requestId });
+    },
+    requestTotals: async (parent) => {
+      return await RequestTotals.findOne({ _id: "requestTotal956" });
+    },
   },
   Mutation: {
     // create a user, sign a token, and send it back
-    createUser: async (parent, { username, email, password }) => {
-      const user = await User.create({ username, email, password });
+    createUser: async (parent, { firstName, lastName, email, password }) => {
+      const user = await User.create({ firstName, lastName, email, password });
       const token = signToken(user);
       return { token, user };
     },
@@ -46,17 +48,6 @@ const resolvers = {
       }
       const token = signToken(user);
       return { token, user };
-    },
-    updateUsername: async (parent, { newUsername }, context) => {
-      if (context.user) {
-        const updatedUser = await User.findOneAndUpdate(
-          { _id: context.user._id },
-          { username: newUsername },
-          { new: true }
-        );
-        return updatedUser;
-      }
-      throw new AuthenticationError("You need to be logged in!");
     },
     updatePassword: async (
       parent,
@@ -83,98 +74,100 @@ const resolvers = {
         "Something went wrong while trying to update a password!"
       );
     },
-    addListing: async (
+    createRequest: async (
       parent,
-      { description, address, dateOfSale, images, author, title, lat, lng },
+      { requestNumber, type, status, date, author, address, images, createdBy },
       context
     ) => {
       if (context.user) {
-        const newListing = await Listing.create({
-          description,
+        const request = await Request.findOne({ requestNumber });
+        if (request) {
+          throw new Error("This request number already exists.");
+        }
+        const newRequest = await Request.create({
+          requestNumber,
+          type,
+          status,
+          date,
+          author,
           address,
-          dateOfSale,
           images,
-          author: context.user.username,
-          title,
-          lat,
-          lng,
+          createdBy,
         });
         await User.findOneAndUpdate(
           { _id: context.user._id },
-          { $push: { userPosts: newListing._id } },
+          {
+            $push: { userRequests: newRequest._id },
+            $inc: { totalUserRequests: 1, activeUserRequests: 1 }, //this operator increments the value
+          },
           { new: true }
         );
-        return newListing;
+        await RequestTotals.findByIdAndUpdate(
+          { _id: "requestTotal956" },
+          { $inc: { totalRequests: 1, activeRequests: 1 } }
+        );
+        return newRequest;
       }
       throw new AuthenticationError("You need to be logged in!");
     },
-    removeListing: async (parent, { listingId }, context) => {
+    cancelRequest: async (parent, { requestId }, context) => {
       if (context.user) {
-        const removeListing = await Listing.findOneAndDelete({
-          _id: listingId,
-        });
-        await User.findOneAndUpdate(
-          { _id: context.user._id },
-          { $pull: { userPosts: removeListing._id } },
-          { new: true }
-        );
-        return removeListing;
-      }
-      throw new AuthenticationError("You need to be logged in!");
-    },
-    editListing: async (
-      parent,
-      { id, description, address, dateOfSale, images, title, lat, lng },
-      context
-    ) => {
-      if (context.user) {
-        const updateListing = await Listing.findOneAndUpdate(
-          { _id: id },
-          { description, address, dateOfSale, images, title, lat, lng },
-          { new: true }
-        );
-        return updateListing;
-      }
-      throw new AuthenticationError("You need to be logged in!");
-    },
-    addFavorites: async (parent, { listingId }, context) => {
-      if (context.user) {
-        //find logged in user through context
-        const user = await User.findOne({ _id: context.user._id });
-        //if the listing we are trying to favorite is already in the savedFavorites array,
-        if (user.savedFavorites.includes(listingId)) {
-          //we remove the listing from the 'savedFavorites' array.
-          await User.findOneAndUpdate(
-            { _id: context.user._id },
-            { $pull: { savedFavorites: listingId } },
+        const request = await Request.findById(requestId);
+
+        if (!request) {
+          throw new Error("Request not found"); // or handle it as per your application's error handling strategy
+        }
+
+        if (request.status === "canceled") {
+          throw new Error("Request has already been canceled"); // Return a message or handle as needed
+        } else {
+          const canceledRequest = await Request.findOneAndUpdate(
+            { _id: requestId },
+            { status: "canceled" },
             { new: true }
           );
-          return user;
+
+          await User.findOneAndUpdate(
+            { _id: context.user._id },
+            {
+              $inc: { activeUserRequests: -1, canceledUserRequests: 1 },
+            }
+          );
+          await RequestTotals.findByIdAndUpdate(
+            { _id: "requestTotal956" },
+            { $inc: { activeRequests: -1, canceledRequests: 1 } }
+          );
+          return canceledRequest;
         }
-        //else we run the code below which adds the listing to the 'savedFavorites' array
-        const favoritedListing = await Listing.findOne({
-          _id: listingId,
-        });
-        await User.findOneAndUpdate(
-          { _id: context.user._id },
-          { $push: { savedFavorites: favoritedListing._id } },
-          { new: true }
-        );
-        return favoritedListing;
       }
       throw new AuthenticationError("You need to be logged in!");
     },
-    removeFavorites: async (parent, { listingId }, context) => {
+    completeRequest: async (parent, { requestId }, context) => {
       if (context.user) {
-        const removeFromFavorites = await Listing.findOne({
-          _id: listingId,
-        });
-        await User.findOneAndUpdate(
-          { _id: context.user._id },
-          { $pull: { savedFavorites: removeFromFavorites._id } },
-          { new: true }
-        );
-        return removeFromFavorites;
+        const request = await Request.findById(requestId);
+        if (!request) {
+          throw new Error("Request number not found.");
+        }
+
+        if (request.status === "completed") {
+          throw new Error("Request has already been completed"); // Return a message or handle as needed
+        } else {
+          const completedRequest = await Request.findOneAndUpdate(
+            { _id: requestId },
+            { status: "completed" },
+            { new: true }
+          );
+          await User.findOneAndUpdate(
+            { _id: context.user._id },
+            {
+              $inc: {
+                activeUserRequests: -1,
+                completedUserRequests: 1,
+              },
+            }
+          );
+          return completedRequest;
+        }
       }
       throw new AuthenticationError("You need to be logged in!");
     },

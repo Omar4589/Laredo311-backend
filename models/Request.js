@@ -3,12 +3,13 @@ const dateFormat = require("../utils/dateFormat");
 
 const requestSchema = new Schema(
   {
-    number: {
+    requestNumber: {
       type: Number,
-      required,
+      required: true,
       minlength: 1,
       maxlength: 1000,
       trim: true,
+      unique: true,
     },
     type: {
       type: String,
@@ -21,14 +22,13 @@ const requestSchema = new Schema(
       trim: true,
       default: "active",
     },
-    // date to hold the sell for buyers
     date: {
       type: String,
       required: [true, "Enter a date"],
     },
     address: {
       type: String,
-      required,
+      required: true,
       trim: true,
     },
     images: {

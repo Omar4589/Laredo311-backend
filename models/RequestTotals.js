@@ -1,28 +1,31 @@
 const { Schema, model } = require("mongoose");
 
 const requestTotalsSchema = new Schema({
+  _id: {
+    type: String,
+  },
   totalRequests: {
     type: Number,
-    required,
+    required: true,
     minlength: 1,
     maxlength: 1000,
     trim: true,
   },
   activeRequests: {
     type: Number,
-    required,
+    required: true,
     maxlength: 1000,
     trim: true,
   },
   canceledRequests: {
     type: Number,
-    required,
+    required: true,
     maxlength: 1000,
     trim: true,
   },
   completedRequests: {
     type: Number,
-    required,
+    required: true,
     maxlength: 1000,
     trim: true,
   },
