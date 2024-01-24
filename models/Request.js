@@ -9,6 +9,7 @@ const requestSchema = new Schema(
       minlength: 1,
       maxlength: 1000,
       trim: true,
+      unique: true,
     },
     type: {
       type: String,
@@ -21,7 +22,6 @@ const requestSchema = new Schema(
       trim: true,
       default: "active",
     },
-    // date to hold the sell for buyers
     date: {
       type: String,
       required: [true, "Enter a date"],

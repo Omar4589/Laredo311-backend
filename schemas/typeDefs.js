@@ -22,7 +22,7 @@ const typeDefs = gql`
     date: String!
     address: String!
     images: [String]
-    createdBy: String!
+    createdBy: [String!]
   }
 
   type RequestTotals {
@@ -43,7 +43,7 @@ const typeDefs = gql`
     me: User
     allUsers: [User]
     allRequests: [Request]
-    request(requestId: ID!): Request
+    singleRequest(requestId: ID!): Request
     requestTotals: RequestTotals
   }
 
@@ -60,6 +60,17 @@ const typeDefs = gql`
       currentPassword: String!
       newPassword: String!
     ): User
+    createRequest(
+      requestNumber: Int!
+      type: String!
+      status: String!
+      date: String!
+      address: String!
+      images: [String]
+      createdBy: [String]
+    ): Request
+    cancelRequest(requestId: ID!): Request
+    completeRequest(requestId: ID!): Request
   }
 `;
 

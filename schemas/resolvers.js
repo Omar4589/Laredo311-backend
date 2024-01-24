@@ -21,7 +21,7 @@ const resolvers = {
     allRequests: async () => {
       return await Request.find();
     },
-    request: async (parent, { requestId }) => {
+    singleRequest: async (parent, { requestId }) => {
       return await Request.findOne({ _id: requestId });
     },
     requestTotals: async (parent) => {
@@ -73,6 +73,103 @@ const resolvers = {
       throw new AuthenticationError(
         "Something went wrong while trying to update a password!"
       );
+    },
+    createRequest: async (
+      parent,
+      { requestNumber, type, status, date, author, address, images, createdBy },
+      context
+    ) => {
+      if (context.user) {
+        const request = await Request.findOne({ requestNumber });
+        if (request) {
+          throw new Error("This request number already exists.");
+        }
+        const newRequest = await Request.create({
+          requestNumber,
+          type,
+          status,
+          date,
+          author,
+          address,
+          images,
+          createdBy,
+        });
+        await User.findOneAndUpdate(
+          { _id: context.user._id },
+          {
+            $push: { userRequests: newRequest._id },
+            $inc: { totalUserRequests: 1, activeUserRequests: 1 }, //this operator increments the value
+          },
+          { new: true }
+        );
+        await RequestTotals.findByIdAndUpdate(
+          { _id: "requestTotal956" },
+          { $inc: { totalRequests: 1, activeRequests: 1 } }
+        );
+        return newRequest;
+      }
+      throw new AuthenticationError("You need to be logged in!");
+    },
+    cancelRequest: async (parent, { requestId }, context) => {
+      if (context.user) {
+        const request = await Request.findById(requestId);
+
+        if (!request) {
+          throw new Error("Request not found"); // or handle it as per your application's error handling strategy
+        }
+
+        if (request.status === "canceled") {
+          throw new Error("Request has already been canceled"); // Return a message or handle as needed
+        } else {
+          const canceledRequest = await Request.findOneAndUpdate(
+            { _id: requestId },
+            { status: "canceled" },
+            { new: true }
+          );
+
+          await User.findOneAndUpdate(
+            { _id: context.user._id },
+            {
+              $inc: { activeUserRequests: -1, canceledUserRequests: 1 },
+            }
+          );
+          await RequestTotals.findByIdAndUpdate(
+            { _id: "requestTotal956" },
+            { $inc: { activeRequests: -1, canceledRequests: 1 } }
+          );
+          return canceledRequest;
+        }
+      }
+      throw new AuthenticationError("You need to be logged in!");
+    },
+    completeRequest: async (parent, { requestId }, context) => {
+      if (context.user) {
+        const request = await Request.findById(requestId);
+        if (!request) {
+          throw new Error("Request number not found.");
+        }
+
+        if (request.status === "completed") {
+          throw new Error("Request has already been completed"); // Return a message or handle as needed
+        } else {
+          const completedRequest = await Request.findOneAndUpdate(
+            { _id: requestId },
+            { status: "completed" },
+            { new: true }
+          );
+          await User.findOneAndUpdate(
+            { _id: context.user._id },
+            {
+              $inc: {
+                activeUserRequests: -1,
+                completedUserRequests: 1,
+              },
+            }
+          );
+          return completedRequest;
+        }
+      }
+      throw new AuthenticationError("You need to be logged in!");
     },
   },
 };
