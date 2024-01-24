@@ -28,6 +28,6 @@ const requestTotalsSchema = new Schema({
   },
 });
 
-const RequestTotals = model("RequestTotals", requestSchema);
+const RequestTotals = model("RequestTotals", requestTotalsSchema);
 
 module.exports = RequestTotals;
