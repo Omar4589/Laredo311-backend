@@ -1,11 +1,12 @@
 const express = require("express");
-const { ApolloServer } = require("apollo-server-express");
+const { ApolloServer, inMemoryLRUCache } = require("apollo-server-express");
 const path = require("path");
 const { authMiddleware } = require("./utils/auth");
-
 const { typeDefs, resolvers } = require("./schemas");
 const db = require("./config/connection");
 require("dotenv").config();
+
+const MAX_CACHE_SIZE = parseInt(process.env.MAX_CACHE_SIZE, 10); // Convert string to integer
 
 const PORT = process.env.PORT || 3001;
 const app = express();
@@ -13,6 +14,9 @@ const server = new ApolloServer({
   typeDefs,
   resolvers,
   context: authMiddleware,
+  persistedQueries: {
+    cache: new inMemoryLRUCache({ maxSize: MAX_CACHE_SIZE }),
+  },
 });
 
 app.use(express.urlencoded({ extended: false }));
