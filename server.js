@@ -1,5 +1,6 @@
 const express = require("express");
-const { ApolloServer, inMemoryLRUCache } = require("apollo-server-express");
+const { ApolloServer } = require("apollo-server-express");
+const { InMemoryLRUCache } = require("@apollo/utils.keyvaluecache");
 const path = require("path");
 const { authMiddleware } = require("./utils/auth");
 const { typeDefs, resolvers } = require("./schemas");
@@ -15,7 +16,7 @@ const server = new ApolloServer({
   resolvers,
   context: authMiddleware,
   persistedQueries: {
-    cache: new inMemoryLRUCache({ maxSize: MAX_CACHE_SIZE }),
+    cache: new InMemoryLRUCache({ maxSize: MAX_CACHE_SIZE }),
   },
 });
 
