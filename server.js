@@ -14,6 +14,8 @@ const app = express();
 const server = new ApolloServer({
   typeDefs,
   resolvers,
+  introspection: true, // development only, remove once launched for production
+  playground: true, // development only, remove once launched for production
   context: authMiddleware,
   persistedQueries: {
     cache: new InMemoryLRUCache({ maxSize: MAX_CACHE_SIZE }),
