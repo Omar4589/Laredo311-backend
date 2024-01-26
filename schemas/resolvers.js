@@ -31,12 +31,12 @@ const resolvers = {
   Mutation: {
     // create a user, sign a token, and send it back
     createUser: async (parent, { firstName, lastName, email, password }) => {
+      if (!firstName || !lastName || !email || !password) {
+        throw new AuthenticationError(
+          "An unexpected error occured. Error code: 1996"
+        );
+      }clea
       try {
-        if (!firstName || !lastName || !email || !password) {
-          throw new AuthenticationError(
-            "An unexpected error occured. Error code: 1996"
-          );
-        }
         const user = await User.create({
           firstName,
           lastName,
