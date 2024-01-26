@@ -31,23 +31,62 @@ const resolvers = {
   Mutation: {
     // create a user, sign a token, and send it back
     createUser: async (parent, { firstName, lastName, email, password }) => {
-      const user = await User.create({ firstName, lastName, email, password });
-      const token = signToken(user);
-      return { token, user };
+      if (!firstName || !lastName || !email || !password) {
+        throw new AuthenticationError(
+          "An unexpected error occured. Error code: 1996"
+        );
+      }clea
+      try {
+        const user = await User.create({
+          firstName,
+          lastName,
+          email,
+          password,
+        });
+        if (!user) {
+          throw new AuthenticationError(
+            "An unexpected error occured. Error code: 2012"
+          );
+        }
+        const token = signToken(user);
+        return { token, user };
+      } catch (e) {
+        if (e instanceof AuthenticationError) {
+          throw e;
+        }
+        throw new AuthenticationError(
+          "An unexpected error occured. Error code: 2017"
+        );
+      }
     },
     // login a user, sign a token, and send it back
     login: async (parent, { email, password }) => {
-      const user = await User.findOne({ email });
-
-      if (!user) {
-        throw new AuthenticationError("Incorrect email or password!");
+      try {
+        if (!email || !password) {
+          throw new AuthenticationError(
+            "An unexpected error occured. Error code: 2011"
+          );
+        }
+        const user = await User.findOne({ email });
+        if (!user) {
+          throw new AuthenticationError("Incorrect email or password!");
+        }
+        const correctPw = await user.isCorrectPassword(password);
+        if (!correctPw) {
+          throw new AuthenticationError("Incorrect email or password!");
+        }
+        const token = signToken(user);
+        return { token, user };
+      } catch (e) {
+        //this if statement check if the error we catch is an instance of an auth error..
+        if (e instanceof AuthenticationError) {
+          throw e; // Rethrow the authentication-related errors
+        }
+        //if any other type of error, we throw a new auth error..
+        throw new AuthenticationError(
+          "An unexpected error occured. Error code: 956"
+        );
       }
-      const correctPw = await user.isCorrectPassword(password);
-      if (!correctPw) {
-        throw new AuthenticationError("Incorrect email or password!");
-      }
-      const token = signToken(user);
-      return { token, user };
     },
     updatePassword: async (
       parent,
