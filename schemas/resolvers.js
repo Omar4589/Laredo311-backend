@@ -31,13 +31,42 @@ const resolvers = {
   Mutation: {
     // create a user, sign a token, and send it back
     createUser: async (parent, { firstName, lastName, email, password }) => {
-      const user = await User.create({ firstName, lastName, email, password });
-      const token = signToken(user);
-      return { token, user };
+      try {
+        if (!firstName || !lastName || !email || !password) {
+          throw new AuthenticationError(
+            "An unexpected error occured. Error code: 1996"
+          );
+        }
+        const user = await User.create({
+          firstName,
+          lastName,
+          email,
+          password,
+        });
+        if (!user) {
+          throw new AuthenticationError(
+            "An unexpected error occured. Error code: 2012"
+          );
+        }
+        const token = signToken(user);
+        return { token, user };
+      } catch (e) {
+        if (e instanceof AuthenticationError) {
+          throw e;
+        }
+        throw new AuthenticationError(
+          "An unexpected error occured. Error code: 2017"
+        );
+      }
     },
     // login a user, sign a token, and send it back
     login: async (parent, { email, password }) => {
       try {
+        if (!email || !password) {
+          throw new AuthenticationError(
+            "An unexpected error occured. Error code: 2011"
+          );
+        }
         const user = await User.findOne({ email });
         if (!user) {
           throw new AuthenticationError("Incorrect email or password!");
