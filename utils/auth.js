@@ -32,6 +32,9 @@ module.exports = {
     return req;
   },
   signToken: function ({ email, firstName, lastName, _id }) {
+    if (!email || !firstName || !lastName || !_id) {
+      throw new Error("Missing required fields for token signing.");
+    }
     const payload = { email, firstName, lastName, _id };
     return jwt.sign({ data: payload }, secret, { expiresIn: expiration });
   },
