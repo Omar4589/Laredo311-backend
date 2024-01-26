@@ -37,7 +37,6 @@ const resolvers = {
     },
     // login a user, sign a token, and send it back
     login: async (parent, { email, password }) => {
-      console.log("login route hit attempt by:", email);
       const user = await User.findOne({ email });
 
       if (!user) {
