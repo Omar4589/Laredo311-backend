@@ -39,7 +39,6 @@ const resolvers = {
     login: async (parent, { email, password }) => {
       try {
         const user = await User.findOne({ email });
-
         if (!user) {
           throw new AuthenticationError("Incorrect email or password!");
         }
@@ -50,8 +49,13 @@ const resolvers = {
         const token = signToken(user);
         return { token, user };
       } catch (e) {
+        //this if statement check if the error we catch is an instance of an auth error..
+        if (e instanceof AuthenticationError) {
+          throw e; // Rethrow the authentication-related errors
+        }
+        //if any other type of error, we throw a new auth error..
         throw new AuthenticationError(
-          "An unexpected error occured. Error code: 007"
+          "An unexpected error occured. Error code: 956"
         );
       }
     },

@@ -14,18 +14,15 @@ module.exports = {
     if (req.headers.authorization) {
       token = token.split(" ").pop().trim();
     }
-
     if (!token) {
       return req;
     }
-
     // if token can be verified, add the decoded user's data to the request so it can be accessed in the resolver
     try {
       const { data } = jwt.verify(token, secret, { maxAge: expiration });
       req.user = data;
     } catch {
       console.log("Invalid token");
-      // console.error(error)
     }
 
     // return the request object so it can be passed to the resolver as `context`
