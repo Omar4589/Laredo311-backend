@@ -35,7 +35,8 @@ const resolvers = {
         throw new AuthenticationError(
           "An unexpected error occured. Error code: 1996"
         );
-      }clea
+      }
+      clea;
       try {
         const user = await User.create({
           firstName,
