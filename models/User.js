@@ -33,6 +33,7 @@ const userSchema = new Schema(
         8,
         "Please enter a password that contains 8 or more characters",
       ],
+      maxlength: [32, "Password must not be more than 32 characters"],
     },
     userRequests: [
       {
